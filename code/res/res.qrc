@@ -1,0 +1,15 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource>
+        <file>checkmark.png</file>
+        <file>info.png</file>
+        <file>line_chart.png</file>
+        <file>refresh.png</file>
+        <file>risk.png</file>
+        <file>down_arrow.png</file>
+        <file>up_arrow.png</file>
+        <file>stylesheet.qss</file>
+        <file>WorkSans-Light.ttf</file>
+        <file>WorkSans-Regular.ttf</file>
+    </qresource>
+</RCC>
