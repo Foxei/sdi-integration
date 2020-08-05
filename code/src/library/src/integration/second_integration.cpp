@@ -2,6 +2,7 @@
 #include "IntergrationLibrary/function_manager.h"
 
 #include <cassert>
+#include <algorithm>
 
 SecondIntegration::SecondIntegration() {
   this->name_ = "Upper sum";

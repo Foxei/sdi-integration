@@ -2,6 +2,7 @@
 #include "IntergrationLibrary/function_manager.h"
 
 #include <cassert>
+#include <algorithm>
 
 FirstIntegration::FirstIntegration() {
   this->name_ = "Lower sum";

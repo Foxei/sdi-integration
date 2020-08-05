@@ -42,7 +42,7 @@ void Controller::setUpConnections() {
 
 void Controller::handleUpdatedValues(double a,
                                      double b,
-                                     const std::string& p,
+                                     const std::string &p,
                                      unsigned int m,
                                      size_t index_function,
                                      size_t index_integral,
@@ -53,6 +53,16 @@ void Controller::handleUpdatedValues(double a,
   FunctionManager *function_manager = &FunctionManager::getInstance();
 
   // ErrorMessage handling
+  if (m <= 1) {
+    emit fireSidebarShowErrorMessage(tr("There must be at least a "
+                                        "integration bar."), MessageTyp::Error);
+    emit fireStatusbarMessage(tr("There must be at least a "
+                                 "integration bar."),
+                              MessageTyp::Error);
+    emit fireSidebarHideValues();
+    emit fireClearPlot();
+    return;
+  }
   if (a >= b) {
     emit fireSidebarShowErrorMessage(tr("The lower integration border must be "
                                         "smaller than the upper "
