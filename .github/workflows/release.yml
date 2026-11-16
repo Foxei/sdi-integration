@@ -1,0 +1,96 @@
+# Build the application for all platforms and attach it to the release.
+# Run it manually (Actions > Release builds > Run workflow) to get the builds
+# as workflow artifacts without a release.
+name: Release builds
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    name: Linux ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build AppImage
+        run: |
+          mkdir -p dist/linux
+          docker compose up --build --exit-code-from linux linux
+      - name: Package
+        run: |
+          mkdir -p upload
+          cp dist/linux/IntegrationGui-${{ matrix.arch }}.AppImage \
+             upload/IntegrationGui-linux-${{ matrix.arch }}.AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: upload/*
+
+  windows:
+    name: Windows x86_64
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (cross-compiled in Docker)
+        run: |
+          mkdir -p dist/windows
+          docker compose up --build --exit-code-from windows windows
+      - name: Package
+        run: |
+          mkdir -p upload
+          (cd dist/windows && zip -qr ../../upload/IntegrationGui-windows-x86_64.zip IntegrationGui)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x86_64
+          path: upload/*
+
+  macos:
+    # GitHub's macOS runners have no Docker, so this builds natively
+    # with the same Qt version and deployment script as the Docker build.
+    name: macOS universal
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        run: packaging/build-macos-native.sh dist/macos
+      - name: Package
+        run: |
+          mkdir -p upload
+          ditto -c -k --keepParent dist/macos/IntegrationGui.app upload/IntegrationGui-macos-universal.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-universal
+          path: upload/*
+
+  release:
+    name: Attach to release
+    if: github.event_name == 'release'
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: upload
+          merge-multiple: true
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" upload/* \
+              --repo "${{ github.repository }}" --clobber

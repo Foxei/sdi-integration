@@ -8,6 +8,8 @@ set -euo pipefail
 APP="$1"
 QT="$2"
 CONTENTS="${APP}/Contents"
+# llvm-otool in the Linux cross build, otool on macOS
+OTOOL="$(command -v llvm-otool || command -v otool)"
 PLUGINS=(platforms/libqcocoa.dylib styles/libqmacstyle.dylib iconengines/libqsvgicon.dylib imageformats/libqsvg.dylib)
 
 mkdir -p "${CONTENTS}/Frameworks" "${CONTENTS}/PlugIns" "${CONTENTS}/Resources"
@@ -23,7 +25,7 @@ done
 while [[ ${#queue[@]} -gt 0 ]]; do
   binary="${queue[0]}"
   queue=("${queue[@]:1}")
-  for framework in $(llvm-otool -L "${binary}" | grep -o '@rpath/Qt[A-Za-z]*\.framework' | sed 's|@rpath/||' | sort -u); do
+  for framework in $("${OTOOL}" -L "${binary}" | grep -o '@rpath/Qt[A-Za-z]*\.framework' | sed 's|@rpath/||' | sort -u); do
     target="${CONTENTS}/Frameworks/${framework}"
     [[ -e "${target}" ]] && continue
     echo "Bundling ${framework}"

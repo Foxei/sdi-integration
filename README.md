@@ -15,6 +15,18 @@ Authors:
 - Sören Mehnert
 - Sharon Michael Rouf-Chowdhury
 
+## Download
+
+Prebuilt apps are attached to every [release](https://github.com/Foxei/sdi-integration/releases):
+
+| OS | File |
+| -- | ---- |
+| macOS 13+ (Apple Silicon and Intel) | `IntegrationGui-macos-universal.zip` |
+| Windows 10+ (x86_64) | `IntegrationGui-windows-x86_64.zip` |
+| Linux (x86_64 / ARM64) | `IntegrationGui-linux-x86_64.AppImage`, `IntegrationGui-linux-aarch64.AppImage` |
+
+The macOS app is not notarized. On first launch, right-click it and choose **Open**, or run `xattr -dr com.apple.quarantine IntegrationGui.app`.
+
 ## Try it: build a native app with Docker
 
 All you need is [Docker](https://docs.docker.com/get-docker/). A single command builds a self-contained application for your operating system and writes it to `dist/`:
@@ -43,6 +55,12 @@ The app is ad-hoc signed. A locally built copy opens normally. If you copy it to
 
 ```bash
 xattr -dr com.apple.quarantine IntegrationGui.app
+```
+
+Without Docker, the macOS app can also be built natively. You need only Python 3 and the Command Line Tools; the script installs Qt, CMake and Ninja into `build-macos/`:
+
+```bash
+packaging/build-macos-native.sh   # dist/macos/IntegrationGui.app
 ```
 
 ### Linux notes
@@ -85,6 +103,10 @@ All icons are SVGs in `code/res/icons/`, so they stay sharp on Retina and other 
 docker run --rm -v "$PWD:/w" -w /w debian:trixie-slim packaging/generate-icons.sh
 ```
 
+### Releases
+
+`.github/workflows/release.yml` builds all platforms when a GitHub release is published and attaches the files to it. Linux and Windows use the same Docker builds as above. macOS is built natively on a macOS runner with `packaging/build-macos-native.sh`, because GitHub's macOS runners have no Docker. To test the builds without creating a release, run the workflow manually from the Actions tab; the files then appear as workflow artifacts.
+
 ### Documentation
 
 Generate the API documentation with Doxygen:
@@ -101,7 +123,8 @@ code/
   src/app/       Qt GUI (model / view / controller)
   res/icons/     SVG icons (UI and app icon)
   res/app/       platform app icons, Info.plist, Windows resource file
-packaging/       cross-compilation toolchains and deployment scripts
+packaging/       cross-compilation toolchains, build and deployment scripts
+.github/         release workflow
 Dockerfile       build stages for the devcontainer and all platforms
 ```
 
