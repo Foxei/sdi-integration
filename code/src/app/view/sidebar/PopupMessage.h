@@ -1,26 +1,34 @@
 #ifndef INTEGRATION_GUI_POPUP_MESSAGE_H
 #define INTEGRATION_GUI_POPUP_MESSAGE_H
 
-#include <QWidget>
+#include <QtWidgets/QFrame>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QPushButton>
+#include <QtGui/QIcon>
 
 #include "view/status/StatusBar.h"
 
+/**
+ * Inline message banner with an icon, a title and a text. Hides itself when clicked.
+ */
 class PopupMessage : public QFrame {
  Q_OBJECT
  private:
   QLabel *label_image_ = nullptr;
   QLabel *label_title_ = nullptr;
   QLabel *label_message_ = nullptr;
-  QPushButton *button_close_ = nullptr;
-  QPixmap images[2];
+  QIcon icons_[2];
+  QColor color_ = Qt::transparent; //< Border and tint color of the current message type
 
   void setUpGui();
 
   void loadImages();
 
   void mouseReleaseEvent(QMouseEvent *event) override;
+
+  /**
+   * Draw a rounded, tinted box with a border in the message color.
+   */
+  void paintEvent(QPaintEvent *event) override;
 
  public:
   explicit PopupMessage(QWidget *parent = nullptr);

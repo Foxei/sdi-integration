@@ -1,5 +1,9 @@
 #include "CollapsibleElement.h"
 
+#include <QtWidgets/QVBoxLayout>
+
+#include "view/SizeDefinitions.h"
+
 CollapsibleElement::CollapsibleElement(QWidget *parent) : QWidget(parent) {
   setUpGui();
   setUpConnection();
@@ -7,90 +11,64 @@ CollapsibleElement::CollapsibleElement(QWidget *parent) : QWidget(parent) {
 
 void CollapsibleElement::setUpGui() {
   // Create instances
-  btn_toggle_ = new QPushButton(this);
-  lbl_title_ = new QLabel(this);
-  widget_body_ = new QWidget(this);
+  btn_title_ = new QToolButton(this);
   lbl_description_ = new QLabel(this);
-  layout_body_ = new QVBoxLayout(this);
+  widget_body_ = new QWidget(this);
+  layout_body_ = new QFormLayout(widget_body_);
   // end
 
   // Setup title bar
-  btn_toggle_->setText(tr("-"));
-  btn_toggle_->setAccessibleName(tr("collapse"));
-  btn_toggle_->setFlat(true);
-  btn_toggle_->setFocusPolicy(Qt::FocusPolicy::NoFocus);
-  btn_toggle_->setAccessibleName("button.flat");
+  QFont font_title = btn_title_->font();
+  font_title.setPointSizeF(font_title.pointSizeF() * 1.2);
+  font_title.setWeight(QFont::DemiBold);
+  btn_title_->setFont(font_title);
+  btn_title_->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+  btn_title_->setIcon(QIcon(":icons/chevron-down.svg"));
+  btn_title_->setIconSize(QSize(14, 14));
+  btn_title_->setCursor(Qt::PointingHandCursor);
+  btn_title_->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+  // Plain header text, native styles would draw a button bezel
+  btn_title_->setStyleSheet("QToolButton { border: none; background: transparent; padding: 0; }");
 
-  lbl_title_->setAccessibleName(tr("headline"));
-
-  lbl_description_->setContentsMargins(0, 0, 0, 10);
-  lbl_description_->setAccessibleName(tr("description"));
   lbl_description_->setWordWrap(true);
-
-  layout_body_->setContentsMargins(0, 0, 0, 0);
-
-  auto *widget_title = new QWidget(this);
-  auto *layout_title = new QGridLayout(widget_title);
-  layout_title->setContentsMargins(0, 0, 0, 0);
-  layout_title->addWidget(lbl_title_, 0, 0, Qt::AlignLeft);
-  layout_title->addWidget(btn_toggle_, 0, 1, Qt::AlignRight);
-  layout_title->addWidget(lbl_description_, 1, 0, 1, 2);
-  widget_title->setLayout(layout_title);
+  lbl_description_->setForegroundRole(QPalette::PlaceholderText);
   // end
 
   // Setup custom content
-  widget_body_->setLayout(layout_body_);
-  widget_body_->setContentsMargins(0, 0, 40, 0);
+  layout_body_->setContentsMargins(0, 8, 0, 0);
+  layout_body_->setVerticalSpacing(Size::FORM_SPACING);
+  layout_body_->setHorizontalSpacing(Size::FORM_SPACING);
+  layout_body_->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+  layout_body_->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+  layout_body_->setRowWrapPolicy(QFormLayout::DontWrapRows);
   // end
 
   // Combine both contents
   auto *layout = new QVBoxLayout(this);
-  layout->addWidget(widget_title);
+  layout->setContentsMargins(0, 0, 0, 16);
+  layout->addWidget(btn_title_);
+  layout->addWidget(lbl_description_);
   layout->addWidget(widget_body_);
-
-  setLayout(layout);
   // end
-
 }
 
 void CollapsibleElement::setUpConnection() {
-  // Connect button to toggleStatus() function
-  connect(btn_toggle_,
-          SIGNAL (clicked()),
-          this,
-          SLOT (toggleStatus())
-  );
-  // Connecting finished
+  connect(btn_title_, &QToolButton::clicked, this, [this] { setExpanded(!widget_body_->isVisibleTo(this)); });
 }
 
 void CollapsibleElement::setTitle(const QString& title) {
-  lbl_title_->setText(title);
+  btn_title_->setText(title);
 }
 
 void CollapsibleElement::setDescription(const QString& description) {
   lbl_description_->setText(description);
 }
 
-QVBoxLayout &CollapsibleElement::getLayout() {
+QFormLayout &CollapsibleElement::getLayout() {
   return *layout_body_;
 }
 
-void CollapsibleElement::collapse() {
-  btn_toggle_->setText(tr("+"));
-  widget_body_->setVisible(false);
-  collapsed = true;
-}
-
-void CollapsibleElement::expand() {
-  btn_toggle_->setText(tr("-"));
-  widget_body_->setVisible(true);
-  collapsed = false;
-}
-
-void CollapsibleElement::toggleStatus() {
-  if (collapsed) {
-    expand();
-  } else {
-    collapse();
-  }
+void CollapsibleElement::setExpanded(bool expanded) {
+  btn_title_->setIcon(QIcon(expanded ? ":icons/chevron-down.svg" : ":icons/chevron-right.svg"));
+  widget_body_->setVisible(expanded);
 }

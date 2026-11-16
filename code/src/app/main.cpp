@@ -1,14 +1,15 @@
 #include "view/Mainwindow.h"
 #include "model/Definitions.h"
 #include "view/ColorDefinitions.h"
+#include "view/AppStyle.h"
 
 #include <IntergrationLibrary/function_manager.h>
 #include <IntergrationLibrary/integration_manager.h>
 
 #include <QtWidgets/QApplication>
-#include <QtCore/QFile>
-#include <QtWidgets/QStyleFactory>
+#include <QtGui/QIcon>
 #include <QtGui/QPalette>
+#include <QtGui/QStyleHints>
 
 /*! \mainpage My Personal Index Page
  *
@@ -28,45 +29,44 @@
 
 
 /**
- * Setting style to dark theme and cross platform fonts
- * @param application Application were the style will be changed
+ * Dark application palette
  */
-void setStyle(QApplication &application) {
-  // Color theme
-  qInfo("Do app style processing");
-  QPalette darkPalette;
-  darkPalette.setColor(QPalette::Window, Color::BACKGROUND);
-  darkPalette.setColor(QPalette::WindowText, Color::BLACK);
-  darkPalette.setColor(QPalette::Base, Color::BASE);
-  darkPalette.setColor(QPalette::AlternateBase, Color::BACKGROUND);
-  darkPalette.setColor(QPalette::ToolTipBase, Color::BASE);
-  darkPalette.setColor(QPalette::ToolTipText, Color::BLACK);
-  darkPalette.setColor(QPalette::Text, Color::BLACK);
-  darkPalette.setColor(QPalette::Button, Color::BACKGROUND);
-  darkPalette.setColor(QPalette::ButtonText, Color::BLACK);
-  darkPalette.setColor(QPalette::BrightText, Color::WHITE);
-  darkPalette.setColor(QPalette::Link, Color::CYAN);
+QPalette darkPalette() {
+  QPalette palette;
+  palette.setColor(QPalette::Window, Color::BACKGROUND);
+  palette.setColor(QPalette::WindowText, Color::TEXT);
+  palette.setColor(QPalette::Base, Color::SURFACE);
+  palette.setColor(QPalette::AlternateBase, Color::BACKGROUND);
+  palette.setColor(QPalette::ToolTipBase, Color::BASE);
+  palette.setColor(QPalette::ToolTipText, Color::TEXT);
+  palette.setColor(QPalette::Text, Color::TEXT);
+  palette.setColor(QPalette::PlaceholderText, Color::TEXT_SECONDARY);
+  palette.setColor(QPalette::Button, Color::BUTTON);
+  palette.setColor(QPalette::ButtonText, Color::TEXT);
+  palette.setColor(QPalette::BrightText, Color::TEXT);
+  palette.setColor(QPalette::Light, Color::BASE.lighter(130));
+  palette.setColor(QPalette::Mid, Color::BASE);
+  palette.setColor(QPalette::Dark, Color::SURFACE.darker(130));
+  palette.setColor(QPalette::Link, Color::ACCENT);
+  palette.setColor(QPalette::Highlight, Color::ACCENT);
+  palette.setColor(QPalette::HighlightedText, Qt::white);
+  palette.setColor(QPalette::Accent, Color::ACCENT);
+  palette.setColor(QPalette::Disabled, QPalette::Text, Color::TEXT_SECONDARY);
+  palette.setColor(QPalette::Disabled, QPalette::WindowText, Color::TEXT_SECONDARY);
+  palette.setColor(QPalette::Disabled, QPalette::ButtonText, Color::TEXT_SECONDARY);
+  return palette;
+}
 
-  darkPalette.setColor(QPalette::Highlight, Color::BLUE);
-  darkPalette.setColor(QPalette::HighlightedText, Color::BLACK);
-
-  // Stylesheet
-  qInfo("Loading Stylesheet: %s", "stylesheet.qss");
-  QFile file_stylesheet(":stylesheet.qss");
-  file_stylesheet.open(QFile::ReadOnly);
-  QString stylesheet = QLatin1String(file_stylesheet.readAll());
-
-  // Setup Fusion style
-  qInfo("Loading Style: %s", "Fusion");
-  QApplication::setPalette(darkPalette);
-  QApplication::setStyle(QStyleFactory::create("Fusion"));
-  application.setStyleSheet(stylesheet);
-
-  qInfo("Setting font: %s", "WorkSans-Light.ttf");
-  QFileInfo file_font(":WorkSans-Light.ttf");
-  QFontDatabase::addApplicationFont(file_font.absoluteFilePath());
-
-  QApplication::setWindowIcon(QIcon(":document_orientation_landscape.png"));
+/**
+ * Fusion style with a dark palette and the system font on all platforms.
+ * Unlike the native styles, Fusion draws all inputs at the same, freely
+ * chosen size. The dark color scheme keeps native title bars dark.
+ */
+void setStyle() {
+  QGuiApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);
+  QApplication::setStyle(new AppStyle());
+  QApplication::setPalette(darkPalette());
+  QApplication::setWindowIcon(QIcon(":icons/app.svg"));
 }
 
 /**
@@ -99,7 +99,11 @@ int main(int argc, char *argv[]) {
 
   // Create application and set style
   QApplication a(argc, argv);
-  setStyle(a);
+  QApplication::setApplicationName("IntegrationGui");
+  QApplication::setApplicationDisplayName(QObject::tr("Integration GUI"));
+  QApplication::setOrganizationName("RWTH SDI");
+  QApplication::setApplicationVersion(PROJECT_VERSION);
+  setStyle();
 
   // Create windows content
   MainWindow window;
@@ -107,8 +111,9 @@ int main(int argc, char *argv[]) {
   // Generate connections in interface
   Controller controller(window.getSidebar(), window.getControlBar(), window.getStatusbar(), window.getChartView());
 
-  // Start application
+  // Start application with a plot of the default values
   window.show();
+  QMetaObject::invokeMethod(window.getSidebar(), &SideBar::sendValuesToController, Qt::QueuedConnection);
   int return_value = QApplication::exec();
 
   // Deallocate memory in lib

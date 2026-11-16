@@ -7,6 +7,8 @@
 #include <sstream>
 #include <QVector>
 #include <QThread>
+#include <QTimer>
+#include <QElapsedTimer>
 
 #include "view/sidebar/SideBar.h"
 #include "view/control/Controlbar.h"
@@ -28,6 +30,9 @@ class Controller : public QObject {
   ControlBar *control_bar_; //< Toolbar with all function buttons
   StatusBar *status_bar_; //< StatusBar at the bottom of window will contains all information of process
   ChartView *chart_view_; //< Chart on left side will plot all functions
+
+  static constexpr int BUSY_MIN_MS = 400; //< Show the busy state at least this long so it does not flicker
+  QElapsedTimer busy_shown_; //< Time since the busy state became visible
 
   /**
    * Connect all parts of the interface together

@@ -1,17 +1,16 @@
 #include "Mainwindow.h"
 
 #include <QScrollArea>
+#include <QSplitter>
 
 void MainWindow::restoreWindowStates() {
-  QSettings settings
-      (QSettings::IniFormat, QSettings::UserScope, "Papercards", "Window");
+  QSettings settings;
   restoreGeometry(settings.value("geometry").toByteArray());
   restoreState(settings.value("window_state").toByteArray());
 }
 
 void MainWindow::storeWindowState() {
-  QSettings settings
-      (QSettings::IniFormat, QSettings::UserScope, "Papercards", "Window");
+  QSettings settings;
   settings.setValue("geometry", saveGeometry());
   settings.setValue("window_state", saveState());
 }
@@ -27,52 +26,47 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 void MainWindow::setUpGui() {
+  setMinimumSize(QSize(760, 520));
+  resize(1100, 720);
   restoreWindowStates();
-  setMinimumSize(QSize(800, 650));
-  // create layout containers
-  QWidget *widget_central = new QWidget(this);
-  QHBoxLayout *layout_central = new QHBoxLayout(widget_central);
-  auto *widget_left = new QFrame(this);
-  QHBoxLayout *layout_left = new QHBoxLayout(widget_left);
-  // end
 
   // Create instances
-  side_bar_ = new SideBar(widget_central);
-  chart_view_ = new ChartView(widget_central);
-  control_bar_ = new ControlBar(widget_left);
+  auto *splitter = new QSplitter(this);
+  auto *widget_right = new QWidget(splitter);
+  auto *layout_right = new QVBoxLayout(widget_right);
+
+  side_bar_ = new SideBar(widget_right);
+  chart_view_ = new ChartView(splitter);
+  control_bar_ = new ControlBar(widget_right);
   status_bar_ = new StatusBar(this);
   // end
 
-  // Add to layout and modify layout parameter
-  layout_left->addWidget(chart_view_);
-  layout_left->addWidget(control_bar_);
+  // Right side: scrollable sidebar with the calculate button below
+  auto *scroll_area = new QScrollArea(widget_right);
+  scroll_area->setWidget(side_bar_);
+  scroll_area->setWidgetResizable(true);
+  scroll_area->setFrameShape(QFrame::NoFrame);
+  scroll_area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-  layout_left->setMargin(0);
-  layout_left->setSpacing(0);
-  layout_left->setAlignment(Qt::AlignTop);
-  layout_left->setContentsMargins(0, 0, 0, 0);
-  widget_left->setLayout(layout_left);
-  widget_left->setAccessibleName("background");
-  layout_central->addWidget(widget_left);
-
-  QScrollArea *dummy = new QScrollArea(widget_central);
-  dummy->setWidget(side_bar_);
-  dummy->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-  dummy->setMinimumSize(side_bar_->minimumSize());
-  layout_central->addWidget(dummy);
-
+  layout_right->addWidget(scroll_area, 1);
+  layout_right->addWidget(control_bar_);
+  layout_right->setContentsMargins(0, 0, 0, 0);
+  layout_right->setSpacing(0);
+  widget_right->setMinimumWidth(side_bar_->minimumWidth());
   // end
-  layout_central->setMargin(0);
-  layout_central->setStretch(0, 1);
-  widget_central->setAccessibleName("background");
-  // Will be removed if correct chartview is created
 
+  // Chart on the left takes the remaining space
+  splitter->addWidget(chart_view_);
+  splitter->addWidget(widget_right);
+  splitter->setStretchFactor(0, 1);
+  splitter->setStretchFactor(1, 0);
+  splitter->setSizes({width() - 340, 340});
+  splitter->setChildrenCollapsible(false);
   // end
 
   // set basic main window stuff
   setStatusBar(status_bar_);
-  setCentralWidget(widget_central);
-  setWindowIcon(QIcon("res/line_chart.png"));
+  setCentralWidget(splitter);
   // end
 }
 

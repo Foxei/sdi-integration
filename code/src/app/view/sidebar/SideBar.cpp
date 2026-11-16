@@ -2,9 +2,10 @@
 
 #include "model/Data.h"
 #include "PopupMessage.h"
+#include "view/SizeDefinitions.h"
 
 #include <QDebug>
-#include <QtWidgets/QStyledItemDelegate>
+#include <QtWidgets/QVBoxLayout>
 
 SideBar::SideBar(QWidget *parent) : QFrame(parent) {
   setUpGUI();
@@ -12,122 +13,110 @@ SideBar::SideBar(QWidget *parent) : QFrame(parent) {
 }
 
 void SideBar::setUpGUI() {
+  // Message banner, hidden until a message is shown
+  currentMessage = new PopupMessage(this);
+  currentMessage->setVisible(false);
 
-  setAccessibleName("background");
   // Set up function block
   widget_function = new CollapsibleElement(this);
-  QVBoxLayout *layout_function = &widget_function->getLayout();
+  QFormLayout *layout_function = &widget_function->getLayout();
   widget_function->setTitle(tr("Function"));
   widget_function->setDescription(tr("Choose the function you want to integrate"
-                                     " and the integration borders."));
+                                     " and the integration bounds."));
 
   combo_function_ = new QComboBox(widget_function);
   combo_function_->setToolTip(tr("Choose function to integrate."));
-  combo_function_->setItemDelegate(new QStyledItemDelegate());
-  layout_function->addWidget(combo_function_);
+  combo_function_->setMinimumHeight(Size::INPUT_HEIGHT);
+  layout_function->addRow(tr("f(x)"), combo_function_);
 
-  auto *label_parameter_ = new QLabel(widget_function);
-  label_parameter_->setText(tr("Parameter"));
-  edit_parameter_ = new QLineEdit(widget_function);
-  edit_parameter_->setPlaceholderText(tr("p"));
-  edit_parameter_->setText(tr(std::to_string(Data::DEFAULT_PARAMETER).c_str()));
+  edit_parameter_ = new NumberInput(4, widget_function);
+  edit_parameter_->setRange(-1000, 1000);
+  edit_parameter_->setValue(Data::DEFAULT_PARAMETER);
   edit_parameter_->setToolTip(tr("This parameter will effect the function evaluation."));
-  layout_function->addWidget(label_parameter_);
-  layout_function->addWidget(edit_parameter_);
+  layout_function->addRow(tr("Parameter p"), edit_parameter_);
 
-  auto *label_border_ = new QLabel(widget_function);
-  label_border_->setText(tr("Borders"));
-  edit_border_a_ = new QLineEdit(widget_function);
-  edit_border_a_->setValidator(new QDoubleValidator());
-  edit_border_a_->setPlaceholderText(tr("a"));
-  edit_border_a_->setText(tr(std::to_string(Data::DEFAULT_LOWER_BOUND).c_str()));
+  edit_border_a_ = new NumberInput(4, widget_function);
+  edit_border_a_->setRange(-1e6, 1e6);
+  edit_border_a_->setValue(Data::DEFAULT_LOWER_BOUND);
   edit_border_a_->setToolTip(tr("This will set the lower bound of your integral."));
-  layout_function->addWidget(label_border_);
-  layout_function->addWidget(edit_border_a_);
+  layout_function->addRow(tr("Lower bound a"), edit_border_a_);
 
-  edit_border_b_ = new QLineEdit(widget_function);
-  edit_border_b_->setValidator(new QDoubleValidator(widget_function));
-  edit_border_b_->setPlaceholderText(tr("b"));
-  edit_border_b_->setText(tr(std::to_string(Data::DEFAULT_UPPER_BOUND).c_str()));
+  edit_border_b_ = new NumberInput(4, widget_function);
+  edit_border_b_->setRange(-1e6, 1e6);
+  edit_border_b_->setValue(Data::DEFAULT_UPPER_BOUND);
   edit_border_b_->setToolTip(tr("This will set the upper bound of your integral."));
-  layout_function->addWidget(edit_border_b_);
-
-  label_error_message_function_ = new QLabel(widget_function);
-  label_error_message_function_->setAccessibleName("error");
-  label_error_message_function_->setWordWrap(true);
-  label_error_message_function_->setContentsMargins(0, 5, 0, 0);
-  label_error_message_function_->setToolTip(tr("See details in statusbar bellow."));
-  //label_error_message_function_->setText( tr("Test error message.") );
-  label_error_message_function_->setVisible(false);
-  layout_function->addWidget(label_error_message_function_);
+  layout_function->addRow(tr("Upper bound b"), edit_border_b_);
   // Function block finished
 
   // Set up integration block
   auto *widget_integration = new CollapsibleElement(this);
-  QVBoxLayout *layout_integration = &widget_integration->getLayout();
+  QFormLayout *layout_integration = &widget_integration->getLayout();
   widget_integration->setTitle(tr("Integration"));
-  widget_integration->setDescription(tr("Choose a integration method and"
+  widget_integration->setDescription(tr("Choose an integration method and the"
                                         " number of supporting points."));
 
   combo_integration_ = new QComboBox(widget_integration);
   combo_integration_->setToolTip(tr("Choose method for integration."));
-  combo_integration_->setItemDelegate(new QStyledItemDelegate());
+  combo_integration_->setMinimumHeight(Size::INPUT_HEIGHT);
+  layout_integration->addRow(tr("Method"), combo_integration_);
 
-  layout_integration->addWidget(combo_integration_);
-
-  auto label_points_ = new QLabel(widget_integration);
-  label_points_->setText(tr("Number points"));
-  spin_points_ = new QSpinBox(widget_integration);
+  spin_points_ = new NumberInput(0, widget_integration);
   spin_points_->setRange(2, 100000);
   spin_points_->setValue(Data::DEFAULT_NUMBER_POINTS);
   spin_points_->setToolTip(tr("Number of supporting points."));
-  layout_integration->addWidget(label_points_);
-  layout_integration->addWidget(spin_points_);
+  layout_integration->addRow(tr("Points"), spin_points_);
   // Integration block finished
 
   // Set up Values block
   auto *widget_values = new CollapsibleElement(this);
-  QVBoxLayout *layout_values = &widget_values->getLayout();
+  QFormLayout *layout_values = &widget_values->getLayout();
   widget_values->setTitle(tr("Values"));
-  widget_values->setDescription(tr("Display all calculated value like derivative and integrals."));
+  widget_values->setDescription(tr("Results of the last calculation."));
 
-  auto widget_values_container = new QWidget(widget_values);
-  auto *layout_values_container = new QGridLayout(widget_values_container);
-  widget_values_container->setLayout(layout_values_container);
-  widget_values_container->setContentsMargins(0, 0, 0, 0);
-  layout_values_container->setContentsMargins(0, 0, 0, 0);
-  layout_values->setMargin(0);
+  label_value_integral_ = new QLabel(tr("NA"), widget_values);
+  label_value_integral_->setTextInteractionFlags(Qt::TextSelectableByMouse);
+  layout_values->addRow(tr("Integral"), label_value_integral_);
 
-  auto label_integral = new QLabel(widget_values_container);
-  label_integral->setText(tr("Integral"));
-  layout_values_container->addWidget(label_integral, 0, 0);
-  label_value_integral_ = new QLabel(widget_values_container);
-  label_value_integral_->setText(tr("NA"));
-  layout_values_container->addWidget(label_value_integral_, 0, 1);
-
-  auto *label_derivative = new QLabel(widget_values_container);
-  label_derivative->setText(tr("Derivative"));
-  layout_values_container->addWidget(label_derivative, 1, 0);
-  label_value_derivative_ = new QLabel(widget_values_container);
-  label_value_derivative_->setText(tr("NA"));
-  layout_values_container->addWidget(label_value_derivative_);
-
-  layout_values->addWidget(widget_values_container);
+  label_value_derivative_ = new QLabel(tr("NA"), widget_values);
+  label_value_derivative_->setTextInteractionFlags(Qt::TextSelectableByMouse);
+  layout_values->addRow(tr("Derivative"), label_value_derivative_);
   // Values block finished
 
+  // Align the fields of all sections by giving all labels the same width,
+  // and center each label vertically on its field
+  int label_width = 0;
+  QList<QWidget *> labels;
+  for (CollapsibleElement *section : {widget_function, widget_integration, widget_values}) {
+    QFormLayout &form = section->getLayout();
+    for (int row = 0; row < form.rowCount(); row++) {
+      QLayoutItem *label = form.itemAt(row, QFormLayout::LabelRole);
+      QLayoutItem *field = form.itemAt(row, QFormLayout::FieldRole);
+      if (label && field) {
+        labels << label->widget();
+        label_width = qMax(label_width, label->widget()->sizeHint().width());
+        label->widget()->setMinimumHeight(field->widget()->minimumSizeHint().height());
+      }
+    }
+  }
+  for (QWidget *label : labels) {
+    label->setMinimumWidth(label_width);
+  }
+
+  // Calculate when pressing enter in a number input
+  for (NumberInput *input : {edit_parameter_, edit_border_a_, edit_border_b_, spin_points_}) {
+    connect(input, &NumberInput::returnPressed, this, &SideBar::sendValuesToController);
+  }
+
   // Add Widgets and set layout
-  auto *widget_layout = new QGridLayout(this);
-  widget_layout->addWidget(widget_function, 0, 0);
-  widget_layout->addWidget(widget_integration, 1, 0);
-  widget_layout->addWidget(widget_values, 2, 0);
+  auto *widget_layout = new QVBoxLayout(this);
+  widget_layout->addWidget(currentMessage);
+  widget_layout->addWidget(widget_function);
+  widget_layout->addWidget(widget_integration);
+  widget_layout->addWidget(widget_values);
+  widget_layout->addStretch(1);
+  widget_layout->setContentsMargins(12, 12, 12, 0);
 
-  widget_layout->setRowStretch(7, 1);
-  widget_layout->setContentsMargins(5, 5, 5, 5);
-
-  setLayout(widget_layout);
-  setMaximumWidth(400);
-  setMinimumWidth(250);
-  setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+  setMinimumWidth(280);
   // finished
 }
 
@@ -151,27 +140,19 @@ void SideBar::hideErrorMessage() {
 }
 
 void SideBar::showMessage(const QString& message, MessageTyp type) {
-  //  label_error_message_function_->setText( message );
-  //label_error_message_function_->setVisible( true );
-  // widget_function->setDescriptionVisible(false);
   QString title;
   if (type == MessageTyp::Error) {
     title = tr("Error");
   } else if (type == MessageTyp::OK) {
     title = tr("Information");
   }
-  if (currentMessage == nullptr)
-    currentMessage = new PopupMessage(this);
-
   currentMessage->setMessage(title, message, type);
   currentMessage->show();
-  currentMessage->setMinimumWidth(size().width() - 5);
-  currentMessage->move(0, 5);
 }
 
 void SideBar::showValues(double integral, double derivative) {
-  label_value_integral_->setText(tr(std::to_string(integral).c_str()));
-  label_value_derivative_->setText(tr(std::to_string(derivative).c_str()));
+  label_value_integral_->setText(QString::number(integral, 'g', 10));
+  label_value_derivative_->setText(QString::number(derivative, 'g', 10));
 }
 
 void SideBar::hideValues() {
@@ -180,30 +161,17 @@ void SideBar::hideValues() {
 }
 
 void SideBar::sendValuesToController() {
-  double a = edit_border_a_->text().toDouble();
-  double b = edit_border_b_->text().toDouble();
-  std::string p = edit_parameter_->text().toStdString();
-  unsigned int m = spin_points_->text().toInt();
+  double a = edit_border_a_->value();
+  double b = edit_border_b_->value();
+  std::string p = QString::number(edit_parameter_->value(), 'g', 15).toStdString();
+  auto m = static_cast<unsigned int>(spin_points_->value());
   size_t index_function = combo_function_->currentIndex();
   size_t index_integral = combo_integration_->currentIndex();
 
-  bool all_set = true;
-  if (edit_border_a_->text().isEmpty() || edit_border_b_->text().isEmpty()
-      || edit_parameter_->text().isEmpty()) {
-    all_set = false;
-  }
-  emit currentValues(a, b, p, m, index_function, index_integral, all_set);
+  // Number inputs always hold a value
+  emit currentValues(a, b, p, m, index_function, index_integral, true);
 }
 
 void SideBar::blockInput(bool value) {
   setDisabled(value);
-}
-
-void SideBar::resizeEvent(QResizeEvent *) {
-  if (currentMessage != nullptr) {
-    int width = size().width();
-    currentMessage->setMinimumWidth(width - 5);
-    currentMessage->setMaximumWidth(width - 5);
-  }
-
 }

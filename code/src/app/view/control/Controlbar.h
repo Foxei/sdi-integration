@@ -2,20 +2,19 @@
 #define INTEGRATION_GUI_CONTROL_BAR_H
 
 #include <QtWidgets/QWidget>
-#include <QtWidgets/QToolBar>
-#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QPushButton>
 
 /**
- * Simple class for control toolbar
+ * Bar with the primary calculate button
  */
 class ControlBar : public QWidget {
  Q_OBJECT
  private:
 
   /**
-   * Action to refresh values and gui
+   * Button to calculate the integral and refresh the plot
    */
-  QAction *action_refresh_ = nullptr;
+  QPushButton *button_calculate_ = nullptr;
 
   /**
    * Set up gui.

@@ -29,6 +29,7 @@ void Controller::setUpConnections() {
   // Statusbar message handler
   connect(this, &Controller::fireStatusbarClearMessage, status_bar_, &StatusBar::clearDisplayedMessage);
   connect(this, &Controller::fireShowProcessIndicator, status_bar_, &StatusBar::showIndicator);
+  connect(this, &Controller::fireShowProcessIndicator, chart_view_, &ChartView::showBusy);
 
   // Block inputs
   connect(this, &Controller::fireBlockInput, control_bar_, &ControlBar::blockInput);
@@ -85,11 +86,11 @@ void Controller::handleUpdatedValues(double a,
     return;
   }
   if (!all_set) {
-    emit fireSidebarShowErrorMessage(tr("One ore more inputs are empty. "
+    emit fireSidebarShowErrorMessage(tr("One or more inputs are empty. "
                                         "Please make sure that all "
                                         "fields are filled."),
                                      MessageTyp::Error);
-    emit fireStatusbarMessage(tr("One ore more inputs are empty. Please "
+    emit fireStatusbarMessage(tr("One or more inputs are empty. Please "
                                  "make sure that all fields are "
                                  "filled."),
                               MessageTyp::Error);
@@ -111,9 +112,10 @@ void Controller::handleUpdatedValues(double a,
   data->INTEGRATION_INDEX = index_integral;
 
   //Integral stuff
-  emit fireShowProcessIndicator(true);
   emit fireBlockInput(true);
-  emit fireStatusbarMessage(tr("Calculation please wait..."), MessageTyp::NONE);
+  emit fireShowProcessIndicator(true);
+  busy_shown_.start();
+  emit fireStatusbarMessage(tr("Calculating, please wait…"), MessageTyp::NONE);
 
   auto *thread = new QThread;
 
@@ -146,21 +148,27 @@ void Controller::handleFinishCalculation(double integral, QVector<double> bar_he
   IntegrationManager *integration_manager = &IntegrationManager::getInstance();
 
   std::stringstream message;
-  message << "Integration successfully for a=" << a << ", b=" << b << ", p=" << p << ", m=" << m
+  message << "Integration successful for a=" << a << ", b=" << b << ", p=" << p << ", m=" << m
           << ", function=" << function_manager->getFunctionName(index_function)
           << " and integration=" << integration_manager->getIntegrationName(index_integration) << ".";
 
   if (m >= 400) {
-    emit fireSidebarShowErrorMessage(tr("More than 400 supporting points "
-                                        "can't be plotted in single bars"
-                                        " anymore."), MessageTyp::OK);
     bar_heights.clear();
   }
 
-  emit firePlotFunction(bar_heights);
-  emit fireSidebarUpdateValues(integral, 0.0);
-  emit fireStatusbarMessage(tr(message.str().c_str()), MessageTyp::OK);
-
+  // Show the results when the busy state ends, so it never shows stale or mixed states
+  int remaining = qMax(0, BUSY_MIN_MS - int(busy_shown_.elapsed()));
+  QString status = QString::fromStdString(message.str());
+  QTimer::singleShot(remaining, this, [this, m, integral, bar_heights, status] {
+    if (m >= 400) {
+      emit fireSidebarShowErrorMessage(tr("More than 400 supporting points "
+                                          "can't be plotted in single bars"
+                                          " anymore."), MessageTyp::OK);
+    }
+    emit firePlotFunction(bar_heights);
+    emit fireSidebarUpdateValues(integral, 0.0);
+    emit fireStatusbarMessage(status, MessageTyp::OK);
+  });
 }
 
 void Controller::handlePlotFinished() {

@@ -1,0 +1,34 @@
+# Build a native, self-contained application into ./dist/<platform>:
+#
+#   docker compose up linux     # dist/linux/IntegrationGui-<arch>.AppImage
+#   docker compose up windows   # dist/windows/IntegrationGui/IntegrationGui.exe
+#   docker compose up macos     # dist/macos/IntegrationGui.app (run on a Mac)
+#
+# `docker compose up` without a service builds Linux and Windows.
+
+services:
+  linux:
+    build:
+      context: .
+      target: linux
+    volumes:
+      - ./dist/linux:/dist
+
+  windows:
+    build:
+      context: .
+      target: windows
+    volumes:
+      - ./dist/windows:/dist
+
+  macos:
+    # Needs the macOS SDK from the Xcode Command Line Tools
+    # (`xcode-select --install`), so it is only built on request.
+    profiles: [macos]
+    build:
+      context: .
+      target: macos
+      additional_contexts:
+        macos-sdk: ${MACOS_SDK:-/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk}
+    volumes:
+      - ./dist/macos:/dist

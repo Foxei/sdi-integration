@@ -3,16 +3,14 @@
 
 #include <QWidget>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QLineEdit>
 #include <QtWidgets/QComboBox>
-#include <QtWidgets/QSpinBox>
-#include <QtWidgets/QGridLayout>
 
 #include <IntergrationLibrary/function_manager.h>
 #include <IntergrationLibrary/integration_manager.h>
 
 #include "view/sidebar/CollapsibleElement.h"
 #include "view/sidebar/PopupMessage.h"
+#include "view/sidebar/NumberInput.h"
 
 /**
  * Sidebar of application to set up parameter and choose functions
@@ -20,6 +18,9 @@
 class SideBar : public QFrame {
  Q_OBJECT
  private:
+  /**
+   * Banner at the top of the sidebar for error and info messages
+   */
   PopupMessage *currentMessage = nullptr;
 
   CollapsibleElement *widget_function = nullptr;
@@ -30,24 +31,19 @@ class SideBar : public QFrame {
   QComboBox *combo_function_ = nullptr;
 
   /**
-   * Textfield to set parameter p, only doubles are valid
+   * Number input to set parameter p
    */
-  QLineEdit *edit_parameter_ = nullptr;
+  NumberInput *edit_parameter_ = nullptr;
 
   /**
-   * Textfield to set upper bound of integral, only doubles are valid
+   * Number input to set lower bound of integral
    */
-  QLineEdit *edit_border_a_ = nullptr;
+  NumberInput *edit_border_a_ = nullptr;
 
   /**
-   * Textfield to set lower bound of integral, only doubles are valid
+   * Number input to set upper bound of integral
    */
-  QLineEdit *edit_border_b_ = nullptr;
-
-  /**
-   * Shows error messages in function area
-   */
-  QLabel *label_error_message_function_ = nullptr;
+  NumberInput *edit_border_b_ = nullptr;
 
   /**
    * Combobox to choose integration method
@@ -57,7 +53,7 @@ class SideBar : public QFrame {
   /**
    * Spinner to choose parameter n, only integers are valid
    */
-  QSpinBox *spin_points_ = nullptr;
+  NumberInput *spin_points_ = nullptr;
 
   /**
    * Label shows final integral value
@@ -79,10 +75,6 @@ class SideBar : public QFrame {
    */
   void fillData();
 
-  /**
-   * Update the size of the message box needed.
-   */
-  void resizeEvent(QResizeEvent *) override;
 
  public:
 

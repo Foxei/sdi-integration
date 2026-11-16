@@ -3,7 +3,8 @@
 
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QLabel>
-#include <QMovie>
+#include <QtWidgets/QProgressBar>
+#include <QtGui/QIcon>
 
 /**
  * Different typ of messages just effect the icon on status bar
@@ -20,9 +21,10 @@ enum class MessageTyp {
 class StatusBar : public QStatusBar {
  Q_OBJECT
  private:
-  QPixmap images[2]; //< Images with can be displayed on status bar
-  QLabel *label_indicator = nullptr; //< Label to display idl indicator
-  QLabel *label_img = nullptr; //< Label to display images
+  QIcon icons_[2]; //< Icons which can be displayed on status bar
+  QProgressBar *progress_indicator = nullptr; //< Busy indicator while calculating
+  QLabel *label_img = nullptr; //< Label to display icons
+  QLabel *label_message = nullptr; //< Label to display the message, respects the padding
 
   /**
    * Setting up layou for statusbar

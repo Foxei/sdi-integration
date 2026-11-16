@@ -4,16 +4,18 @@
 #include <QtGui/QColor>
 
 /**
- * Contains all application colors
+ * Dark theme colors, used where the platform has no native dark mode
  */
 namespace Color {
 
-const QColor CYAN = QColor(2, 233, 253);
-const QColor BLUE = QColor(148, 164, 214);
-const QColor WHITE = QColor(248, 248, 242);
-const QColor BACKGROUND = QColor(243, 242, 241);
-const QColor BASE = QColor(198, 198, 198);
-const QColor BLACK = QColor(10, 10, 10);
+const QColor ACCENT = QColor(76, 141, 246);
+const QColor DANGER = QColor(229, 83, 75);
+const QColor SURFACE = QColor(30, 30, 32);      // input fields, chart
+const QColor BACKGROUND = QColor(40, 40, 43);   // windows, sidebar
+const QColor BUTTON = QColor(55, 55, 59);
+const QColor BASE = QColor(72, 72, 76);         // borders
+const QColor TEXT = QColor(230, 230, 230);
+const QColor TEXT_SECONDARY = QColor(150, 150, 155);
 
 }
 

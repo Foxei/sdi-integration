@@ -3,8 +3,8 @@
 
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QVBoxLayout>
-#include <QtWidgets/QPushButton>
+#include <QtWidgets/QFormLayout>
+#include <QtWidgets/QToolButton>
 
 /**
  * A Widget with a title and a description field. The custom content can be hidden but
@@ -14,9 +14,9 @@ class CollapsibleElement : public QWidget {
  Q_OBJECT
  private:
   /**
-   * Label vor the Widget title.
+   * Title button with a disclosure arrow, toggles the content.
    */
-  QLabel *lbl_title_ = nullptr;
+  QToolButton *btn_title_ = nullptr;
 
   /**
    * Label for the widget description.
@@ -24,34 +24,14 @@ class CollapsibleElement : public QWidget {
   QLabel *lbl_description_ = nullptr;
 
   /**
-   * Button to toggle the content visible or hide it.
-   */
-  QPushButton *btn_toggle_ = nullptr;
-
-  /**
    * Layout of the body to display custom content.
    */
-  QVBoxLayout *layout_body_ = nullptr;
+  QFormLayout *layout_body_ = nullptr;
 
   /**
    * Widget for the custom content.
    */
   QWidget *widget_body_ = nullptr;
-
-  /**
-   * Indicator for status of widget (hidden|visible).
-   */
-  bool collapsed = false;
-
-  /**
-   * Will perform the hiding of the custom content.
-   */
-  void collapse();
-
-  /**
-   * Will perform the redisplay of the custom content.
-   */
-  void expand();
 
   /**
    * Setting up Gui
@@ -83,16 +63,17 @@ class CollapsibleElement : public QWidget {
 
   /**
    * The Layout of the container for the custom content.
-   * @return HVBoxLayout of custom content widget
+   * @return QFormLayout of custom content widget
    */
-  QVBoxLayout &getLayout();
+  QFormLayout &getLayout();
 
  private slots:
 
   /**
-   * Slot to perform the toggling from visible to hidden.
+   * Slot to show or hide the custom content.
+   * @param expanded true to show the content
    */
-  void toggleStatus();
+  void setExpanded(bool expanded);
 };
 
 #endif //INTEGRATION_GUI_COLLAPSIBLE_ELEMENT_H

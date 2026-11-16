@@ -370,3 +370,7 @@ Session.vim
 tags
 
 # End of https://www.gitignore.io/api/bazel,c++,cmake,latex,python,vim
+
+# Packaged applications (docker compose up)
+dist/
+.DS_Store

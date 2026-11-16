@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Integration GUI
+Comment=Numerical integration with Qt
+Exec=IntegrationGui
+Icon=IntegrationGui
+Categories=Education;Math;
